@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <link rel="stylesheet" href="lib/bootstrap.min.css">
+    <title>Todolist - Vue.js</title>
+    <style>
+        #todo-form {
+            margin-bottom: 1rem;
+        }
+        #todo-list label {
+            margin: 0;
+            cursor: pointer;
+        }
+        #todo-list .disabled {
+            background-color: #cfc;
+        }
+        #todo-list .disabled label {
+            text-decoration: line-through;
+        }
+        .todo-filters {
+            margin-bottom: 1rem;
+            text-align: right;
+        }
+        .actions {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="container mt-4">
+
+<main id="todo-app">
+    <h1>Todolist Vue.js</h1>
+    <hr>
+
+    <p>Il vous reste <strong>{{ remaining }}/{{ tasks.length }}</strong> tâches à effectuer dans votre liste.</p>
+
+    <form id="todo-form" @submit.prevent="addTask">
+        <div class="form-group row">
+            <div class="col-sm-7">
+                <div class="input-group mb-3">
+                    <input v-model="newTaskTitle" type="text" class="form-control" placeholder="Nouvelle tâche ...">
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-primary">Ajouter</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-5 text-right">
+                <button type="button" class="btn btn-danger" @click="clearDone">Effacer les tâches complétées</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="todo-filters">
+        Filtrer la liste par :
+        <div class="btn-group">
+            <button type="button" class="btn btn-secondary btn-sm" :class="{ active : (filterValue === true) }" @click="filterValue = true">Effectuées</button>
+            <button type="button" class="btn btn-secondary btn-sm" :class="{ active : (filterValue === false) }" @click="filterValue = false">Non-effectuées</button>
+            <button type="button" class="btn btn-secondary btn-sm" :class="{ active : (filterValue === null) }" @click="filterValue = null">Toutes</button>
+        </div>
+    </div>
+
+    <ul class="list-group" id="todo-list" v-if="filteredTasks.length > 0">
+        <li :class="{ 'disabled' : task.done }" class="list-group-item" v-for="(task, index) in filteredTasks">
+            <!-- ----------- DEBUT DU LI----------------- -->
+            <div v-show="editMode.includes(index)">
+                <input type="text" class="form-control col-sm-6" v-model="task.title" @keydown.enter="toggleEditMode(index)" ref="editField">
+                <small><kbd>Entrée</kbd> pour valider.</small>
+            </div>
+            <div v-show="!editMode.includes(index)">
+                <input type="checkbox" :id="'task_' + task.id" v-model="task.done">
+                <label :for="'task_' + task.id">{{ task.title }}</label>
+                <div class="actions">
+                    <a href="#" title="Éditer cette tâche" @click.prevent="toggleEditMode(index)">✏</a>
+                    <a href="#" title="Supprimer cette tâche" @click.prevent="removeTask(index)">❌</a>
+                </div>
+            </div>
+            <!-- ----------- FIN DU LI----------------- -->
+        </li>
+    </ul>
+    <p v-else>Aucune tâche à afficher ...</p>
+</main>
+
+<script src="lib/vue.js"></script>
+<script>
+    // Votre code ici ...
+    new Vue({
+        el : '#todo-app',
+        data : {
+            newTaskTitle : '',
+            lastInsertId : 5,
+            tasks : [
+                { id : 1, title : 'Acheter du pain', done : false },
+                { id : 2, title : 'Réparer le PC', done : true },
+                { id : 3, title : 'Louer un DVD', done : false },
+                { id : 4, title : 'Nourrir le chat', done : false },
+                { id : 5, title : 'Apprendre Vue.js', done : false }
+            ],
+            filterValue : null,
+            editMode : []
+        },
+        computed : {
+            filteredTasks : function() {
+                if (this.filterValue === null)
+                    return this.tasks;
+
+                return this.tasks.filter(task => task.done === this.filterValue);
+            },
+
+            remaining : function() {
+                // Retournez ici le nombre de tâches restantes à effectuer
+                
+                /* let total = 0;
+                for (let i = 0; i < this.tasks.length; i++) {
+                    if (this.tasks[i].done === false) {
+                        total++;
+                    }
+                }
+                return total; */
+
+                return this.tasks.filter( task => !task.done ).length;
+            }
+        },
+        methods : {
+            toggleEditMode(index) {
+                let pos = this.editMode.indexOf(index);
+                if (pos > -1) {
+                    this.editMode.splice(pos, 1);
+                } else {
+                    this.editMode.push(index);
+                    Vue.nextTick(() => {
+                        this.$refs.editField[index].focus();
+                    });
+                }
+            },
+
+            clearDone : function() {
+                // Effacez les tâches marquées comme étant faites (done : true)
+
+                /*for (let i = 0; i < this.tasks.length; i++) {
+                    if (this.tasks[i].done === true) {
+                        this.tasks.splice(i, 1);
+                        i--;
+                    }
+                }*/
+
+                this.tasks = this.tasks.filter( task => !task.done );
+            },
+
+            addTask : function() {
+                this.tasks.push({
+                    id    : ++this.lastInsertId,
+                    title : this.newTaskTitle, // <-- Valeur du champs <input type="text">, relié avec un v-model
+                    done  : false
+                });
+
+                this.newTaskTitle = ''; // Vide le champs <input type="text">
+            },
+            
+            removeTask : function(indexToDelete) {
+                this.tasks.splice(indexToDelete, 1);
+            }
+        },
+    });
+</script>
+
+</body>
+</html>
